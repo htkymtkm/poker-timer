@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Poker Tournament Timer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #111;
+      color: #fff;
+      font-family: 'Arial', sans-serif;
+      overflow: hidden;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      justify-content: flex-start;
+      align-items: center;
+    }
+    #main-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100vw;
+      margin-top: 4vh;
+      margin-bottom: 4vh;
+    }
+    #level {
+      font-size: 7vw;
+      font-weight: bold;
+      margin: 1vh 0 2vh 0;
+      color: #fff;
+      user-select: none;
+    }
+    #timer {
+      font-size: 14vw;
+      color: #ffe066;
+      margin: 0 0 2vh 0;
+      user-select: none;
+      font-weight: bold;
+    }
+    #blind {
+      font-size: 6vw;
+      font-weight: bold;
+      color: #00e6e6;
+      margin: 0 0 1vh 0;
+      user-select: none;
+    }
+    #next-blind {
+      font-size: 3vw;
+      color: #ccc;
+      margin: 0 0 2vh 0;
+      user-select: none;
+    }
+    #controls {
+      margin-bottom: 2vh;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      gap: 2vw;
+    }
+    .btn {
+      font-size: 2.5vw;
+      padding: 1.5vw 4vw;
+      margin: 0 0.5vw;
+      border: none;
+      border-radius: 0.5vw;
+      background: #222;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+      min-width: 7vw;
+      min-height: 7vw;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-arrow {
+      font-size: 3vw;
+      padding: 1.5vw 5vw;
+      min-width: 9vw;
+      min-height: 7vw;
+      background: #333;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #edit-structure-btn {
+      position: absolute;
+      top: 1vw;
+      right: 2vw;
+      font-size: 2vw;
+      padding: 0.5vw 2vw;
+      background: #444;
+      color: #fff;
+      border: none;
+      border-radius: 0.5vw;
+      z-index: 10;
+    }
+    #edit-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    #edit-modal-content {
+      background: #222;
+      padding: 3vw;
+      border-radius: 1vw;
+      max-width: 90vw;
+      width: 500px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #structure-textarea {
+      width: 100%;
+      height: 40vh;
+      font-size: 1.2em;
+      margin-bottom: 2vh;
+      background: #111;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 0.5vw;
+      padding: 1vw;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+    #edit-modal label {
+      color: #fff;
+      margin-bottom: 1vh;
+      font-size: 1.1em;
+    }
+    #edit-modal .btn {
+      font-size: 1.2em;
+      margin: 0 1vw;
+      padding: 0.5em 2em;
+      min-height: unset;
+    }
+    @media (max-width: 600px) {
+      #level { font-size: 11vw; }
+      #timer { font-size: 20vw; }
+      #blind { font-size: 9vw; }
+      #next-blind { font-size: 5vw; }
+      .btn { font-size: 5vw; padding: 3vw 8vw; min-width: 18vw; min-height: 12vw; }
+      .btn-arrow { font-size: 7vw; padding: 3vw 8vw; min-width: 18vw; min-height: 12vw; }
+      #edit-structure-btn { font-size: 4vw; padding: 1vw 4vw; }
+      #edit-modal-content { width: 95vw; }
+    }
+  </style>
+</head>
+<body>
+  <button id="edit-structure-btn">編集</button>
+  <div id="main-content">
+    <div id="level"></div>
+    <div id="timer">00:00</div>
+    <div id="blind"></div>
+    <div id="next-blind"></div>
+  </div>
+  <div id="controls">
+    <button class="btn" id="startBtn">Start</button>
+    <button class="btn" id="pauseBtn">Pause</button>
+    <button class="btn btn-arrow" id="back1minBtn">◀</button>
+    <button class="btn btn-arrow" id="forward1minBtn">▶</button>
+    <button class="btn" id="nextBtn">Next</button>
+  </div>
+  <!-- 編集モーダル -->
+  <div id="edit-modal">
+    <div id="edit-modal-content">
+      <label for="structure-textarea">
+        例:<br>
+        1,1,2,2,20<br>
+        2,2,4,4,20<br>
+        Break,10
+      </label>
+      <textarea id="structure-textarea"></textarea>
+      <div>
+        <button class="btn" id="save-structure-btn">保存</button>
+        <button class="btn" id="cancel-structure-btn">キャンセル</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    // デフォルトストラクチャー
+    let structure = [
+      {level: 1, sb: 1, bb: 2, ante: 2, duration: 20},
+      {level: 2, sb: 2, bb: 4, ante: 4, duration: 20},
+      {level: 3, sb: 3, bb: 6, ante: 6, duration: 20},
+      {level: 4, sb: 4, bb: 8, ante: 8, duration: 20},
+      {level: 5, sb: 6, bb: 12, ante: 12, duration: 20},
+      {level: "Break", duration: 10},
+      {level: 6, sb: 8, bb: 16, ante: 16, duration: 20},
+      {level: 7, sb: 10, bb: 20, ante: 20, duration: 20},
+      {level: 8, sb: 15, bb: 30, ante: 30, duration: 20},
+      {level: 9, sb: 20, bb: 40, ante: 40, duration: 20},
+      {level: 10, sb: 30, bb: 60, ante: 60, duration: 20},
+      {level: "Break", duration: 10},
+      {level: 11, sb: 40, bb: 80, ante: 80, duration: 20},
+      {level: 12, sb: 50, bb: 100, ante: 100, duration: 20},
+      {level: 13, sb: 100, bb: 200, ante: 200, duration: 20},
+      {level: 14, sb: 200, bb: 400, ante: 400, duration: 20},
+    ];
+
+    let levelIndex = 0;
+    let remainingSeconds = 0;
+    let running = false;
+    let timerInterval = null;
+
+    const timerEl = document.getElementById('timer');
+    const levelEl = document.getElementById('level');
+    const blindEl = document.getElementById('blind');
+    const nextBlindEl = document.getElementById('next-blind');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const back1minBtn = document.getElementById('back1minBtn');
+    const forward1minBtn = document.getElementById('forward1minBtn');
+    const editBtn = document.getElementById('edit-structure-btn');
+    const editModal = document.getElementById('edit-modal');
+    const structureTextarea = document.getElementById('structure-textarea');
+    const saveStructureBtn = document.getElementById('save-structure-btn');
+    const cancelStructureBtn = document.getElementById('cancel-structure-btn');
+
+    function pad(n) { return n < 10 ? '0' + n : n; }
+
+    function updateDisplay() {
+      const s = structure[levelIndex];
+      if (s.level === "Break") {
+        levelEl.textContent = "=== BREAK ===";
+        levelEl.style.color = "#ffa500";
+        timerEl.textContent = "";
+        blindEl.textContent = "休憩タイム";
+        blindEl.style.color = "#ffa500";
+        nextBlindEl.textContent = "";
+      } else {
+        levelEl.textContent = `Level ${s.level}`;
+        levelEl.style.color = "#fff";
+        blindEl.textContent = `BLIND: ${s.sb}/${s.bb} (${s.ante})`;
+        blindEl.style.color = "#00e6e6";
+        // 次のレベル
+        let nextIndex = levelIndex + 1;
+        while (nextIndex < structure.length) {
+          const nextS = structure[nextIndex];
+          if (nextS.level !== "Break") {
+            nextBlindEl.textContent = `Next Blind: ${nextS.sb}/${nextS.bb} (${nextS.ante})`;
+            return;
+          }
+          nextIndex++;
+        }
+        nextBlindEl.textContent = "Next Blind: -";
+      }
+    }
+
+    function updateTimer() {
+      if (structure[levelIndex] && structure[levelIndex].level !== "Break") {
+        const mins = Math.floor(remainingSeconds / 60);
+        const secs = remainingSeconds % 60;
+        timerEl.textContent = `${pad(mins)}:${pad(secs)}`;
+      } else {
+        timerEl.textContent = "";
+      }
+    }
+
+    function startLevel() {
+      const s = structure[levelIndex];
+      remainingSeconds = s.duration * 60;
+      updateDisplay();
+      updateTimer();
+      running = true;
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (running && remainingSeconds > 0) {
+          remainingSeconds--;
+          updateTimer();
+        }
+        if (running && remainingSeconds === 0) {
+          clearInterval(timerInterval);
+          levelIndex++;
+          if (levelIndex < structure.length) {
+            startLevel();
+          } else {
+            timerEl.textContent = "";
+            levelEl.textContent = "Tournament Finished!";
+            levelEl.style.color = "#0f0";
+            blindEl.textContent = "";
+            nextBlindEl.textContent = "";
+            running = false;
+          }
+        }
+      }, 1000);
+    }
+
+    startBtn.onclick = function() {
+      if (!running) {
+        running = true;
+        if (remainingSeconds === 0) {
+          startLevel();
+        } else {
+          if (timerInterval) clearInterval(timerInterval);
+          timerInterval = setInterval(() => {
+            if (running && remainingSeconds > 0) {
+              remainingSeconds--;
+              updateTimer();
+            }
+            if (running && remainingSeconds === 0) {
+              clearInterval(timerInterval);
+              levelIndex++;
+              if (levelIndex < structure.length) {
+                startLevel();
+              } else {
+                timerEl.textContent = "";
+                levelEl.textContent = "Tournament Finished!";
+                levelEl.style.color = "#0f0";
+                blindEl.textContent = "";
+                nextBlindEl.textContent = "";
+                running = false;
+              }
+            }
+          }, 1000);
+        }
+      }
+    };
+
+    pauseBtn.onclick = function() {
+      running = false;
+      if (timerInterval) clearInterval(timerInterval);
+    };
+
+    nextBtn.onclick = function() {
+      running = false;
+      if (timerInterval) clearInterval(timerInterval);
+      levelIndex++;
+      if (levelIndex < structure.length) {
+        startLevel();
+      } else {
+        timerEl.textContent = "";
+        levelEl.textContent = "Tournament Finished!";
+        levelEl.style.color = "#0f0";
+        blindEl.textContent = "";
+        nextBlindEl.textContent = "";
+        running = false;
+      }
+    };
+
+    // ◀ボタンで1分進める
+    back1minBtn.onclick = function() {
+      if (structure[levelIndex] && structure[levelIndex].level !== "Break") {
+        remainingSeconds = Math.min(structure[levelIndex].duration * 60, remainingSeconds + 60);
+        updateTimer();
+      }
+    };
+
+    // ▶ボタンで1分戻す
+    forward1minBtn.onclick = function() {
+      if (structure[levelIndex] && structure[levelIndex].level !== "Break") {
+        remainingSeconds = Math.max(0, remainingSeconds - 60);
+        updateTimer();
+      }
+    };
+
+    // 編集モーダルの表示
+    editBtn.onclick = function() {
+      structureTextarea.value = structure.map(s => {
+        if (s.level === "Break") {
+          return `Break,${s.duration}`;
+        } else {
+          return `${s.level},${s.sb},${s.bb},${s.ante},${s.duration}`;
+        }
+      }).join('\n');
+      editModal.style.display = "flex";
+      document.body.style.overflow = "hidden";
+    };
+
+    // 編集モーダルの保存
+    saveStructureBtn.onclick = function() {
+      const lines = structureTextarea.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const newStructure = [];
+      for (let line of lines) {
+        const parts = line.split(',');
+        if (parts[0].toLowerCase() === "break") {
+          if (parts.length !== 2 || isNaN(Number(parts[1]))) {
+            alert("Break行は「Break,分」の形式で入力してください");
+            return;
+          }
+          newStructure.push({level: "Break", duration: Number(parts[1])});
+        } else {
+          if (parts.length !== 5 || isNaN(Number(parts[0])) || isNaN(Number(parts[1])) || isNaN(Number(parts[2])) || isNaN(Number(parts[3])) || isNaN(Number(parts[4]))) {
+            alert("通常行は「レベル,SB,BB,ANTE,分」の形式で入力してください");
+            return;
+          }
+          newStructure.push({
+            level: Number(parts[0]),
+            sb: Number(parts[1]),
+            bb: Number(parts[2]),
+            ante: Number(parts[3]),
+            duration: Number(parts[4])
+          });
+        }
+      }
+      structure = newStructure;
+      levelIndex = 0;
+      running = false;
+      if (timerInterval) clearInterval(timerInterval);
+      updateDisplay();
+      updateTimer();
+      editModal.style.display = "none";
+      document.body.style.overflow = "";
+    };
+
+    // 編集モーダルのキャンセル
+    cancelStructureBtn.onclick = function() {
+      editModal.style.display = "none";
+      document.body.style.overflow = "";
+    };
+
+    // モーダル外クリックで閉じる
+    editModal.onclick = function(e) {
+      if (e.target === editModal) {
+        editModal.style.display = "none";
+        document.body.style.overflow = "";
+      }
+    };
+
+    // 初期表示
+    updateDisplay();
+    updateTimer();
+
+    // 全画面化（iPhone/Android/PCでF11やホーム追加で全画面にできます）
+    document.body.addEventListener('dblclick', () => {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+      }
+    });
+  </script>
+</body>
+</html>
